@@ -46,6 +46,7 @@ class User(db.Model):
 
 class NameForm(FlaskForm):
     name = StringField("What is your name?", validators = [DataRequired()])
+    role = SelectField("Role?:", choices = [('Administrator', 'Administrator'), ('Moderator', 'Moderator'), ('User', 'User')], validators = [DataRequired()])
     submit = SubmitField('Submit')
 
 class LoginForm(FlaskForm):
@@ -63,7 +64,7 @@ def index():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.name.data).first()
         if user is None:
-            user_role = Role.query.filter_by(name='User').first()
+            user_role = Role.query.filter_by(name = form.role.data).first()
             user = User(username=form.name.data, role = user_role)
             db.session.add(user)
             db.session.commit()
@@ -73,7 +74,10 @@ def index():
         session['name'] = form.name.data
         return redirect(url_for('index'))
     usuarios = User.query.all()
-    return render_template('index.html', form=form, nome=session.get('name'), known=session.get('known', False), usuarios = usuarios)
+    funcoes = Role.query.order_by(Role.name).all()
+    qtdUsuarios = User.query.count()
+    qtdFuncoes = Role.query.count()
+    return render_template('index.html', form=form, nome=session.get('name'), known=session.get('known', False), usuarios = usuarios, funcoes = funcoes, qtdUsuarios = qtdUsuarios, qtdFuncoes = qtdFuncoes)
 
 @app.route('/login', methods=['GET','POST'])
 def login():
